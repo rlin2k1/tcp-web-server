@@ -1,7 +1,5 @@
 # CS118 Project 1
 
-Template for for [UCLA CS118 Spring 2017 Project 1](http://web.cs.ucla.edu/classes/spring17/cs118/project-1.html)
-
 ## Makefile
 
 This provides a couple make targets for things.
