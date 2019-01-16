@@ -1,4 +1,16 @@
 # CS118 Project 1
+Name: Roy Lin<br>
+UCLA ID: 704-767-891<br>
+
+## High Level Design of Server
+
+## High Level Design of Client
+
+## Problems I Ran Into
+
+## List of Additional Libraries Used
+
+## Online Tutorials or Code Examples
 
 ## Makefile
 
