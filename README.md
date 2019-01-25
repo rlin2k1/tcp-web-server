@@ -12,24 +12,24 @@ My high level design of the Client was based off of the Sample Code client.cpp p
 This CS 118 Project 1 was very similar to the CS 111 Project 1B in Spring of 2018 - creating Clients and Servers to connect to each other through Socket TCP Connection. The only difference was that I did not know how to create a Multithreaded Server - and that was the problem I ran into as when one Client was connected, another Client could not connect at the same time. I ran into issues on Select not timing out - or timing out and not writing an error message into the specified file. I ran into errors while making Buffers - not everything would be sent from the Client Side to the Host Side. I ran into problems trying discard already written text into the Server side file when the Socket would time out. I even ran into problems trying to pass multiple arguments to the function the Thread would run on - eventually learning to put the arguments into a struct. Although I ran into a lot of problems, these were common pitfalls when working with network operations. Many of the problems were met by other people on Google and the solutions to problems could readily be found online.
 
 ## List of Additional Libraries Used
-I had quite a bit of included libraries:
-#include <sys/types.h>
-#include <sys/socket.h> //For the Socket()
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <string.h> //String Library
-#include <stdio.h> //Standard Input/Ouput Library
-#include <errno.h> //Error Handling
-#include <unistd.h>
-#include <thread> //For Multi-Threading - Handling Multiple Clients
-#include <iostream> //Input and Output
-#include <signal.h> //For Signal Processing and KILL() Command
-#include <fcntl.h> //For Socket Non Blocking
-#include <chrono> //For Timing
-#include <stdlib.h> //For Standard Library
-#include <sys/wait.h>
-#include <fstream>
-#include <sys/select.h> //For the Select()
+I had quite a bit of included libraries:<br>
+#include <sys/types.h><br>
+#include <sys/socket.h> //For the Socket()<br>
+#include <netinet/in.h><br>
+#include <arpa/inet.h><br>
+#include <string.h> //String Library<br>
+#include <stdio.h> //Standard Input/Ouput Library<br>
+#include <errno.h> //Error Handling<br>
+#include <unistd.h><br>
+#include <thread> //For Multi-Threading - Handling Multiple Clients<br>
+#include <iostream> //Input and Output<br>
+#include <signal.h> //For Signal Processing and KILL() Command<br>
+#include <fcntl.h> //For Socket Non Blocking<br>
+#include <chrono> //For Timing<br>
+#include <stdlib.h> //For Standard Library<br>
+#include <sys/wait.h><br>
+#include <fstream><br>
+#include <sys/select.h> //For the Select()<br>
 
 ## Online Tutorials or Code Examples
 Code Examples:
