@@ -9,7 +9,12 @@ My high level design of the Server was based off of the Sample Code server.cpp p
 My high level design of the Client was based off of the Sample Code client.cpp provided by the Hints Section of the Project Specification and the Client Code from TA ZHEHUI ZANG's Discussion Section Slides. Basically, the Client was designed to take inputs from the User for PORT Number, Hostname of Server (IP Address), and the File to be transferred. The Client then binds the Hostname and PORT Number given to open a Socket TCP Connection to the Server. The Client attempts to open the User requested file for transfer and reads from the file into a buffer and sends that buffer over the Socket.
 
 ## Problems I Ran Into
-This CS 118 Project 1 was very similar to the CS 111 Project 1B in Spring of 2018 - creating Clients and Servers to connect to each other through Socket TCP Connection. The only difference was that I did not know how to create a Multithreaded Server - and that was the problem I ran into as when one Client was connected, another Client could not connect at the same time. I ran into issues on Select not timing out - or timing out and not writing an error message into the specified file. I ran into errors while making Buffers - not everything would be sent from the Client Side to the Host Side. I ran into problems trying discard already written text into the Server side file when the Socket would time out. I even ran into problems trying to pass multiple arguments to the function the Thread would run on - eventually learning to put the arguments into a struct. Although I ran into a lot of problems, these were common pitfalls when working with network operations. Many of the problems were met by other people on Google and the solutions to problems could readily be found online.
+This CS 118 Project 1 was very similar to the CS 111 Project 1B in Spring of 2018 - creating Clients and Servers to connect to each other through Socket TCP Connection. The only difference was that I did not know how to create a Multithreaded Server - and that was the problem I ran into as when one Client was connected, another Client could not connect at the same time. I solved this issue by taking a look at the Sample Multithread Code and the DZONE Article detailing Server Multithreading.<br>
+I ran into issues on Select not timing out - or timing out and not writing an error message into the specified file. I solved this issue by looking in the MAN Section of the Unix Terminal to see the Select() Specification.<br>
+I ran into errors while making Buffers - not everything would be sent from the Client Side to the Host Side. I solved this issue by taking a close look at the code and realizing that the Buffer size in the Server did not add up to each other - was basically using different Buffer lengths. So, I created one Global Macro detailing the buffer length in both the Server and Client Programs to solve this issue.<br>
+I ran into problems trying discard already written text into the Server side file when the Socket would time out. I solved this issue by looking how to reopen a File for writing at the very beginning. -> freopen()<br>
+I even ran into problems trying to pass multiple arguments to the function the Thread would run on - eventually learning to put the arguments into a struct.<br>
+Although I ran into a lot of problems, these were common pitfalls when working with network operations. Many of the problems were met by other people on Google and the solutions to problems could readily be found online.
 
 ## List of Additional Libraries Used
 I had quite a bit of included libraries:<br>
@@ -44,6 +49,10 @@ Online Tutorials:
 - https://dzone.com/articles/parallel-tcpip-socket-server-with-multi-threading
 - http://man7.org/linux/man-pages/man2/select.2.html
 - https://www.geeksforgeeks.org/socket-programming-in-cc-handling-multiple-clients-on-server-without-multi-threading/
+- https://stackoverflow.com/questions/1352749/multiple-arguments-to-function-called-by-pthread-create
+- http://www.cplusplus.com/reference/cstdio/freopen/
+- https://stackoverflow.com/questions/5269683/rewindfile-pointer-and-then-fwrite-wont-fwrite-overwrite-the-file-contents
+- http://www.cplusplus.com/reference/cstdio/fopen/
 
 ## Makefile
 
