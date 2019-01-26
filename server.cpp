@@ -36,9 +36,11 @@ Date Created:
 #include <fstream>
 #include <sys/select.h> //For the Select()
 
+#include <sys/stat.h> //For MakeDir()
+
 using namespace std; //Using the Standard Namespace
 
-#define BUFLENGTH 1024
+#define BUFLENGTH 1025
 
 struct arg_struct { 
     int socket;          // Socket File Descriptor
@@ -62,7 +64,7 @@ void *socketThread(void *arg)
   string file_path = file_directory + "/" + to_string(num) + ".file"; //FileName
   FILE *fs = fopen(file_path.c_str(), "wb"); //Open the File for Modification
 
-  char error[25] = "ERROR: Select Timed Out!";
+  char error[6] = "ERROR";
   char buf[BUFLENGTH] = {0}; //Set the Buffer as BUFLENGTH Characters
 
   while(true)
@@ -83,13 +85,13 @@ void *socketThread(void *arg)
     if (rc == 0)
     {
         FILE *fd = freopen(file_path.c_str(), "w", fs); //Rewrite the File!
-        fwrite(error, 1, 10, fd); //Write the Error Message into the File
+        fwrite(error, 1, 6, fd); //Write the Error Message into the File
+        fflush(fd); //Make Sure Everything is Written to File!
         cerr << "ERROR: Select Timed Out!" << endl;
         close(newSocket); //Finally Close the Connection
         pthread_exit(NULL);
         exit(7);
     }
-
     int fr_block_sz = 0; //We Got Something!
     while((fr_block_sz = recv(newSocket, buf, BUFLENGTH, 0)) > 0)
     {
@@ -120,6 +122,7 @@ void *socketThread(void *arg)
           exit(7);
         }
     }
+    
   }
   close(newSocket); //Finally Close the Connection
   pthread_exit(NULL);
@@ -142,7 +145,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // -------------------------------------------------------------------------- //
   signal(SIGQUIT, sigquit_handler);
   signal(SIGTERM, sigterm_handler);
-
+  int port_number = -1; //Sentinel
   // ------------------------------------------------------------------------ //
   // Error Handling from Arguments
   // ------------------------------------------------------------------------ //
@@ -150,14 +153,20 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     cerr << "ERROR: Need 2 Arguments: Port Number and File Directory" << endl;
     exit(1);
   }
-
-  int port_number = stoi(argv[1]); //The Port Number is the First Argument
+  try{
+    port_number = stoi(argv[1]); //The Port Number is the First Argument
+  }
+  catch(std::invalid_argument& e) {
+    cerr << "ERROR: Invalid Port. Please Enter Valid Port NUMBER" << endl;
+    exit(2);
+  }
   if(port_number <= 1023){
     cerr << "ERROR: Reserved Port Number Detected. Please Specify a Port Number"
       << " Greater than 1023" << endl;
     exit(2);
   }
   file_directory = argv[2]; //Assume Directory is Always Correct-2nd Arg
+  mkdir(file_directory.c_str(), 0777); //Will Always Have Permissions
 
   cerr << "Port Number to Be Connected to: " << port_number << endl;
   cerr << "Directory to Save Transferred File in: " << file_directory << endl;
@@ -174,9 +183,10 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   int yes = 1;
   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
     cerr << "ERROR: Set Socket Options Failed" << endl;
+    close(sockfd); //Finally Close the Connection
     return 1;
   }
-  // fcntl(sockfd, F_SETFL, O_NONBLOCK);
+  fcntl(sockfd, F_SETFL, O_NONBLOCK);
   // if (fcntl(sockfd, F_SETFL, O_NONBLOCK)  == -1) {
   //   perror("fcntyl");
   //   return 1;
@@ -195,6 +205,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     //Bind the Port and Hostname/IP Address Together
     cerr << "ERROR: Error Binding the Port and the HostName/IP Address Together"
       << endl;
+    close(sockfd); //Finally Close the Connection
     exit(2);
   }
 
@@ -204,6 +215,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   if (listen(sockfd, 100) == -1) {
     //Start Listening to the Connections
     cerr << "ERROR: Listen() Failed" << endl;
+    close(sockfd); //Finally Close the Connection
     exit(2);
   }
 
@@ -242,6 +254,8 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       //to it to Process so the Main Thread can Entertain Next Request
       if (newSocket == -1) { //Error Handling for Bad Connection
         cerr << "ERROR: ACCEPT() Failed" << endl;
+        close(newSocket);
+        close(sockfd); //Finally Close the Connection
         exit(2);
       }
 
@@ -258,6 +272,8 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
 
       if(pthread_create(&tid[i], NULL, socketThread, (void*) &arguments) != 0 ){
         cerr << "Failed to Create Thread!" << endl;
+        close(newSocket); //Finally Close the Connection
+        close(sockfd); //Finally Close the Connection
       }
       i = i + 1;
       if( i >= 100)

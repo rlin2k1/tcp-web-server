@@ -22,6 +22,7 @@ Date Created:
 #include <unistd.h>
 #include <thread> //For Multi-Threading - Handling Multiple Clients
 #include <iostream> //Input and Output
+#include <fcntl.h> //For Socket Non Blocking
 
 using namespace std; //Using the Standard Namespace
 
@@ -39,7 +40,14 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   }
 
   const char* hostname = argv[1]; //The HostName/IP Address is 1st Argument
-  int port_number = stoi(argv[2]); //The Port Number is the 2nd Argument
+  int port_number = -1; //Sentinel
+  try{
+    port_number = stoi(argv[2]); //The Port Number is the First Argument
+  }
+  catch(std::invalid_argument& e) {
+    cerr << "ERROR: Invalid Port. Please Enter Valid Port NUMBER" << endl;
+    exit(2);
+  }
   if(port_number <= 1023){
     cerr << "ERROR: Reserved Port Number Detected. Please Specify a Port Number"
       << " Greater than 1023" << endl;
@@ -68,12 +76,37 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // ------------------------------------------------------------------------ //
   // Connect to the Server
   // ------------------------------------------------------------------------ //
-  if (connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)) == -1)
-  //Attempt to Connect to the Given HostName/IP Address and Port Number
+  int flags = fcntl(sockfd, F_GETFL);
+  flags |= O_NONBLOCK;
+  fcntl(sockfd, F_SETFL, flags);
+
+  fd_set active_fd_set;
+  fd_set working_fd_set;
+
+  FD_ZERO (&active_fd_set); //Zero Out the Active File Descriptor Set
+  FD_SET (sockfd, &active_fd_set); //Add the newSocket to the Working Set
+  connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+
+  working_fd_set = active_fd_set; //Determine the Working Set
+  struct timeval tv = {14, 0};   //Set the Timeout Interval as 15 Seconds!
+
+  int rc = select(sockfd + 1, NULL, &working_fd_set, NULL, &tv);
+  if (rc < 0)
   {
-    cerr << "ERROR: Connect Function Failed" << endl;
-    exit(2);
+      cerr << "ERROR: SELECT() FAILED" << endl;
+      close(sockfd); //Finally Close the Connection
+      exit(7);
   }
+  if (rc == 0)
+  {
+      cerr << "ERROR: Connect Function Failed" << endl;
+      close(sockfd); //Finally Close the Connection
+      exit(7);
+  }
+
+  flags = fcntl(sockfd, F_GETFL); 
+  flags &= (~O_NONBLOCK); 
+  fcntl(sockfd, F_SETFL, flags);
 
   struct sockaddr_in clientAddr; //Save the Client Address
   socklen_t clientAddrLen = sizeof(clientAddr); //Size of the Client Address
@@ -81,6 +114,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   {
     //Make Sure Client Address is OK
     cerr << "ERROR: Getsockname Function Failed" << endl;
+    close(sockfd); //Finally Close the Connection
     exit(3);
   }
 
@@ -99,16 +133,17 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   memset(buf, '\0', sizeof(buf)); //Reset Buffer Every Time
 
   int fs_block_sz;
-  while((fs_block_sz = fread(buf, sizeof(char), 500, fs)) > 0)
+  while((fs_block_sz = fread(buf, sizeof(char), BUFLENGTH, fs)) > 0)
   {
     cerr << "Send: " << buf << endl; //Output the Buffer into Standard Output;
     if (send(sockfd, buf, fs_block_sz, 0) == -1) {
       //Attempt to Send the BUFFER String Over the Socket Connection
       cerr << "ERROR: Send Function Failed" << endl;
+      close(sockfd); //Finally Close the Connection
       exit(4);
     }
   }
   close(sockfd); //Finally Close the Connection
 
-  return 0; //Exit Normally
+  exit(0); //Exit Normally
 }
