@@ -26,7 +26,7 @@ Date Created:
 
 using namespace std; //Using the Standard Namespace
 
-#define BUFLENGTH 1024
+#define BUFLENGTH 100
 
 int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
 {
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   if(argc != 4) {
     cerr << "ERROR: Need 3 Arguments: HostName, Port Number, and File Name to " 
       << "Transfer" << endl;
-    exit(1);
+    exit(3);
   }
 
   const char* hostname = argv[1]; //The HostName/IP Address is 1st Argument
@@ -46,12 +46,12 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   }
   catch(std::invalid_argument& e) {
     cerr << "ERROR: Invalid Port. Please Enter Valid Port NUMBER" << endl;
-    exit(2);
+    exit(3);
   }
   if(port_number <= 1023){
     cerr << "ERROR: Reserved Port Number Detected. Please Specify a Port Number"
       << " Greater than 1023" << endl;
-    exit(1);
+    exit(3);
   }
   string file_name = argv[3]; //Assume File Name is Always Correct - 3rd Arg
 
@@ -76,36 +76,47 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // ------------------------------------------------------------------------ //
   // Connect to the Server
   // ------------------------------------------------------------------------ //
-  int flags = fcntl(sockfd, F_GETFL);
-  flags |= O_NONBLOCK;
-  fcntl(sockfd, F_SETFL, flags);
+  int flags = fcntl(sockfd, F_GETFL); //Get Flags from the Socket
+  flags |= O_NONBLOCK; //Add the Non Blocking Flag to the Socket Flags Set
+  fcntl(sockfd, F_SETFL, flags); //Set The Socket to NONBLOCKING
+  socklen_t slen; //Socket Length
+  int errorCheck; //Error Code
 
-  fd_set active_fd_set;
-  fd_set working_fd_set;
+  int res = connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+  if (res < 0) { //Possible Error
+    if(errno == EINPROGRESS) {
+      fd_set active_fd_set;
+      fd_set working_fd_set;
 
-  FD_ZERO (&active_fd_set); //Zero Out the Active File Descriptor Set
-  FD_SET (sockfd, &active_fd_set); //Add the newSocket to the Working Set
-  connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+      FD_ZERO (&active_fd_set); //Zero Out the Active File Descriptor Set
+      FD_SET (sockfd, &active_fd_set); //Add the newSocket to the Working Set
 
-  working_fd_set = active_fd_set; //Determine the Working Set
-  struct timeval tv = {14, 0};   //Set the Timeout Interval as 15 Seconds!
+      working_fd_set = active_fd_set; //Determine the Working Set
 
-  int rc = select(sockfd + 1, NULL, &working_fd_set, NULL, &tv);
-  if (rc < 0)
-  {
-      cerr << "ERROR: SELECT() FAILED" << endl;
-      close(sockfd); //Finally Close the Connection
-      exit(7);
-  }
-  if (rc == 0)
-  {
-      cerr << "ERROR: Connect Function Failed" << endl;
-      close(sockfd); //Finally Close the Connection
-      exit(7);
-  }
-
+      struct timeval tv = {15, 0};   //Set the Timeout Interval as 15 Seconds!
+      if (select(sockfd + 1, NULL, &working_fd_set, NULL, &tv) > 0) 
+      { 
+        slen = sizeof(int); 
+        getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&errorCheck), &slen); 
+        if (errorCheck) { 
+          cerr << "ERROR: Connection Error" << endl;
+          exit(3);
+        } 
+      } 
+      else 
+      { 
+        cerr << "ERROR: Connection Timed Out Error" << endl;
+        exit(3);
+      }
+     } 
+     else { 
+      cerr << "ERROR: Connection Error" << endl;
+      exit(3); 
+     } 
+  } 
+  //Make the Socket Block Again
   flags = fcntl(sockfd, F_GETFL); 
-  flags &= (~O_NONBLOCK); 
+  flags &= ~O_NONBLOCK;
   fcntl(sockfd, F_SETFL, flags);
 
   struct sockaddr_in clientAddr; //Save the Client Address
@@ -140,10 +151,11 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       //Attempt to Send the BUFFER String Over the Socket Connection
       cerr << "ERROR: Send Function Failed" << endl;
       close(sockfd); //Finally Close the Connection
-      exit(4);
+      exit(3);
     }
+    sleep(3);
   }
   close(sockfd); //Finally Close the Connection
 
-  exit(0); //Exit Normally
+  return 0; //Exit Normally
 }

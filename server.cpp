@@ -40,7 +40,7 @@ Date Created:
 
 using namespace std; //Using the Standard Namespace
 
-#define BUFLENGTH 1025
+#define BUFLENGTH 1025 //One Bigger than the Client Buffer Length
 
 struct arg_struct { 
     int socket;          // Socket File Descriptor
@@ -80,7 +80,7 @@ void *socketThread(void *arg)
         cerr << "ERROR: SELECT() FAILED" << endl;
         close(newSocket); //Finally Close the Connection
         pthread_exit(NULL);
-        exit(7);
+        exit(3);
     }
     if (rc == 0)
     {
@@ -90,7 +90,7 @@ void *socketThread(void *arg)
         cerr << "ERROR: Select Timed Out!" << endl;
         close(newSocket); //Finally Close the Connection
         pthread_exit(NULL);
-        exit(7);
+        exit(3);
     }
     int fr_block_sz = 0; //We Got Something!
     while((fr_block_sz = recv(newSocket, buf, BUFLENGTH, 0)) > 0)
@@ -119,7 +119,7 @@ void *socketThread(void *arg)
           cerr << "ERROR: RECV() FAILED" << endl;
           close(newSocket); //Finally Close the Connection
           pthread_exit(NULL);
-          exit(7);
+          exit(3);
         }
     }
     
@@ -140,9 +140,9 @@ void sigterm_handler(int signum) {
 
 int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
 {
-  // -------------------------------------------------------------------------- //
+  // ------------------------------------------------------------------------ //
   // Signal Handling
-  // -------------------------------------------------------------------------- //
+  // ------------------------------------------------------------------------ //
   signal(SIGQUIT, sigquit_handler);
   signal(SIGTERM, sigterm_handler);
   int port_number = -1; //Sentinel
@@ -151,19 +151,19 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // ------------------------------------------------------------------------ //
   if(argc != 3) {
     cerr << "ERROR: Need 2 Arguments: Port Number and File Directory" << endl;
-    exit(1);
+    exit(3);
   }
   try{
     port_number = stoi(argv[1]); //The Port Number is the First Argument
   }
   catch(std::invalid_argument& e) {
     cerr << "ERROR: Invalid Port. Please Enter Valid Port NUMBER" << endl;
-    exit(2);
+    exit(3);
   }
   if(port_number <= 1023){
     cerr << "ERROR: Reserved Port Number Detected. Please Specify a Port Number"
       << " Greater than 1023" << endl;
-    exit(2);
+    exit(3);
   }
   file_directory = argv[2]; //Assume Directory is Always Correct-2nd Arg
   mkdir(file_directory.c_str(), 0777); //Will Always Have Permissions
@@ -184,7 +184,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
     cerr << "ERROR: Set Socket Options Failed" << endl;
     close(sockfd); //Finally Close the Connection
-    return 1;
+    exit(3);
   }
   fcntl(sockfd, F_SETFL, O_NONBLOCK);
   // if (fcntl(sockfd, F_SETFL, O_NONBLOCK)  == -1) {
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     cerr << "ERROR: Error Binding the Port and the HostName/IP Address Together"
       << endl;
     close(sockfd); //Finally Close the Connection
-    exit(2);
+    exit(3);
   }
 
   // ------------------------------------------------------------------------ //
@@ -216,9 +216,8 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     //Start Listening to the Connections
     cerr << "ERROR: Listen() Failed" << endl;
     close(sockfd); //Finally Close the Connection
-    exit(2);
+    exit(3);
   }
-
   // ------------------------------------------------------------------------ //
   // Select Function Setup - Do We Really Need This? Since We Are Only Using 1SD
   // ------------------------------------------------------------------------ //
@@ -245,7 +244,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       {
           cerr << "ERROR: SELECT() FAILED" << endl;
           close(sockfd); //Finally Close the Connection
-          exit(7);
+          exit(3);
       }
 
       newSocket = accept(sockfd, (struct sockaddr *) &clientAddr,
@@ -256,7 +255,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
         cerr << "ERROR: ACCEPT() Failed" << endl;
         close(newSocket);
         close(sockfd); //Finally Close the Connection
-        exit(2);
+        exit(3);
       }
 
       char ipstr[INET_ADDRSTRLEN] = {'\0'}; //Set String to NullByte
