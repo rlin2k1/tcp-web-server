@@ -53,6 +53,7 @@ Online Tutorials:
 - http://www.cplusplus.com/reference/cstdio/freopen/
 - https://stackoverflow.com/questions/5269683/rewindfile-pointer-and-then-fwrite-wont-fwrite-overwrite-the-file-contents
 - http://www.cplusplus.com/reference/cstdio/fopen/
+- http://developerweb.net/viewtopic.php?id=3196
 
 ## Makefile
 
