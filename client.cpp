@@ -23,10 +23,11 @@ Date Created:
 #include <thread> //For Multi-Threading - Handling Multiple Clients
 #include <iostream> //Input and Output
 #include <fcntl.h> //For Socket Non Blocking
+#include <netdb.h> //For GetHostByName()
 
 using namespace std; //Using the Standard Namespace
 
-#define BUFLENGTH 100
+#define BUFLENGTH 1024
 
 int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
 {
@@ -39,10 +40,10 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     exit(3);
   }
 
-  const char* hostname = argv[1]; //The HostName/IP Address is 1st Argument
+  const char* hostname = argv[1]; //The HostName/IP Address is First Argument
   int port_number = -1; //Sentinel
   try{
-    port_number = stoi(argv[2]); //The Port Number is the First Argument
+    port_number = stoi(argv[2]); //The Port Number is the Second Argument
   }
   catch(std::invalid_argument& e) {
     cerr << "ERROR: Invalid Port. Please Enter Valid Port NUMBER" << endl;
@@ -62,62 +63,134 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // ------------------------------------------------------------------------ //
   // Create a Socket using TCP IP
   // ------------------------------------------------------------------------ //
-  //sockfd contains the file descriptor to access the Socket
-  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  int sockfd;  
+  struct addrinfo hints, *servinfo, *p;
+  int rv;
 
-  struct sockaddr_in serverAddr; //Get Ready to Store the Server Address
-  serverAddr.sin_family = AF_INET; //Type
-  serverAddr.sin_port = htons(port_number); //Define the Port Number
-  //Short, Network Byte Order
-  serverAddr.sin_addr.s_addr = inet_addr(hostname); //Where is the Server IP
-  memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
+  memset(&hints, 0, sizeof hints);
+  hints.ai_family = AF_INET; // Use AF_INET6 to force IPv6
+  hints.ai_socktype = SOCK_STREAM;
+
+  if ((rv = getaddrinfo(hostname, argv[2], &hints, &servinfo)) != 0) {
+    cerr << "ERROR: Get Address Info Failed" << endl;
+    exit(3);
+  }
+
+  // Loop through all the results and connect to the first we can
+  for(p = servinfo; p != NULL; p = p->ai_next) {
+      if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+          cerr << "ERROR: Failed to Create Socket" << endl;
+          continue;
+      }
+      int flags = fcntl(sockfd, F_GETFL); //Get Flags from the Socket
+      flags |= O_NONBLOCK; //Add the Non Blocking Flag to the Socket Flags Set
+      fcntl(sockfd, F_SETFL, flags); //Set The Socket to NONBLOCKING
+      socklen_t slen; //Socket Length
+      int errorCheck; //Error Code
+
+      int res = connect(sockfd, p->ai_addr, p->ai_addrlen);
+      if (res < 0) { //Possible Error
+      if(errno == EINPROGRESS) {
+        fd_set active_fd_set;
+        fd_set working_fd_set;
+
+        FD_ZERO (&active_fd_set); //Zero Out the Active File Descriptor Set
+        FD_SET (sockfd, &active_fd_set); //Add the newSocket to the Working Set
+
+        working_fd_set = active_fd_set; //Determine the Working Set
+
+        struct timeval tv = {15, 0};   //Set the Timeout Interval as 15 Seconds!
+        if (select(sockfd + 1, NULL, &working_fd_set, NULL, &tv) > 0) 
+        { 
+          slen = sizeof(int); 
+          getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&errorCheck), &slen); 
+          if (errorCheck) { 
+            cerr << "ERROR: Connection Error" << endl;
+            exit(3);
+          } 
+        } 
+        else 
+        { 
+          cerr << "ERROR: Connection Timed Out Error" << endl;
+          exit(3);
+        }
+      } 
+      else { 
+        cerr << "ERROR: Connection Error" << endl;
+        exit(3); 
+      } 
+    } 
+    //Make the Socket Block Again
+    flags = fcntl(sockfd, F_GETFL); 
+    flags &= ~O_NONBLOCK;
+    fcntl(sockfd, F_SETFL, flags);
+
+    break; // If we get here, we must have connected successfully
+  }
+
+  if (p == NULL) {
+    // Looped off the end of the list with no connection
+    cerr << "ERROR: Failed to Bind Socket" << endl;
+    exit(3);
+  }
+
+  freeaddrinfo(servinfo); // All done with this structure
+  //sockfd contains the file descriptor to access the Socket
+  // int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+  // struct sockaddr_in serverAddr; //Get Ready to Store the Server Address
+  // serverAddr.sin_family = AF_INET; //Type
+  // serverAddr.sin_port = htons(port_number); //Define the Port Number
+  // //Short, Network Byte Order
+  // serverAddr.sin_addr.s_addr = inet_addr(hostname); //Where is the Server IP
+  // memset(serverAddr.sin_zero, '\0', sizeof(serverAddr.sin_zero));
   //Memset to Null Bytes
 
   // ------------------------------------------------------------------------ //
   // Connect to the Server
   // ------------------------------------------------------------------------ //
-  int flags = fcntl(sockfd, F_GETFL); //Get Flags from the Socket
-  flags |= O_NONBLOCK; //Add the Non Blocking Flag to the Socket Flags Set
-  fcntl(sockfd, F_SETFL, flags); //Set The Socket to NONBLOCKING
-  socklen_t slen; //Socket Length
-  int errorCheck; //Error Code
+  // int flags = fcntl(sockfd, F_GETFL); //Get Flags from the Socket
+  // flags |= O_NONBLOCK; //Add the Non Blocking Flag to the Socket Flags Set
+  // fcntl(sockfd, F_SETFL, flags); //Set The Socket to NONBLOCKING
+  // socklen_t slen; //Socket Length
+  // int errorCheck; //Error Code
 
-  int res = connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
-  if (res < 0) { //Possible Error
-    if(errno == EINPROGRESS) {
-      fd_set active_fd_set;
-      fd_set working_fd_set;
+  // int res = connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+  // if (res < 0) { //Possible Error
+  //   if(errno == EINPROGRESS) {
+  //     fd_set active_fd_set;
+  //     fd_set working_fd_set;
 
-      FD_ZERO (&active_fd_set); //Zero Out the Active File Descriptor Set
-      FD_SET (sockfd, &active_fd_set); //Add the newSocket to the Working Set
+  //     FD_ZERO (&active_fd_set); //Zero Out the Active File Descriptor Set
+  //     FD_SET (sockfd, &active_fd_set); //Add the newSocket to the Working Set
 
-      working_fd_set = active_fd_set; //Determine the Working Set
+  //     working_fd_set = active_fd_set; //Determine the Working Set
 
-      struct timeval tv = {15, 0};   //Set the Timeout Interval as 15 Seconds!
-      if (select(sockfd + 1, NULL, &working_fd_set, NULL, &tv) > 0) 
-      { 
-        slen = sizeof(int); 
-        getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&errorCheck), &slen); 
-        if (errorCheck) { 
-          cerr << "ERROR: Connection Error" << endl;
-          exit(3);
-        } 
-      } 
-      else 
-      { 
-        cerr << "ERROR: Connection Timed Out Error" << endl;
-        exit(3);
-      }
-     } 
-     else { 
-      cerr << "ERROR: Connection Error" << endl;
-      exit(3); 
-     } 
-  } 
-  //Make the Socket Block Again
-  flags = fcntl(sockfd, F_GETFL); 
-  flags &= ~O_NONBLOCK;
-  fcntl(sockfd, F_SETFL, flags);
+  //     struct timeval tv = {15, 0};   //Set the Timeout Interval as 15 Seconds!
+  //     if (select(sockfd + 1, NULL, &working_fd_set, NULL, &tv) > 0) 
+  //     { 
+  //       slen = sizeof(int); 
+  //       getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&errorCheck), &slen); 
+  //       if (errorCheck) { 
+  //         cerr << "ERROR: Connection Error" << endl;
+  //         exit(3);
+  //       } 
+  //     } 
+  //     else 
+  //     { 
+  //       cerr << "ERROR: Connection Timed Out Error" << endl;
+  //       exit(3);
+  //     }
+  //    } 
+  //    else { 
+  //     cerr << "ERROR: Connection Error" << endl;
+  //     exit(3); 
+  //    } 
+  // } 
+  // //Make the Socket Block Again
+  // flags = fcntl(sockfd, F_GETFL); 
+  // flags &= ~O_NONBLOCK;
+  // fcntl(sockfd, F_SETFL, flags);
 
   struct sockaddr_in clientAddr; //Save the Client Address
   socklen_t clientAddrLen = sizeof(clientAddr); //Size of the Client Address
@@ -153,7 +226,6 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       close(sockfd); //Finally Close the Connection
       exit(3);
     }
-    sleep(3);
   }
   close(sockfd); //Finally Close the Connection
 
