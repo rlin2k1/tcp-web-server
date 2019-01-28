@@ -63,25 +63,32 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // ------------------------------------------------------------------------ //
   // Create a Socket using TCP IP
   // ------------------------------------------------------------------------ //
-  int sockfd;  
-  struct addrinfo hints, *servinfo, *p;
-  int rv;
+  int sockfd; //Socket File Descriptor
+  struct addrinfo hints, *servinfo, *p; //For getaddrinfo()
+  int rv; //Check Return Value of getaddrinfo()
 
-  memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_INET; // Use AF_INET6 to force IPv6
+  memset(&hints, 0, sizeof hints); //Initialize Hints
+  hints.ai_family = AF_INET; // AF_INET for IPv4
   hints.ai_socktype = SOCK_STREAM;
 
-  if ((rv = getaddrinfo(hostname, argv[2], &hints, &servinfo)) != 0) {
+  if ((rv = getaddrinfo(hostname, argv[2], &hints, &servinfo)) != 0)//GetAddrInfo
+  {
     cerr << "ERROR: Get Address Info Failed" << endl;
     exit(3);
   }
 
-  // Loop through all the results and connect to the first we can
+  // Loop through all results and try to connect
   for(p = servinfo; p != NULL; p = p->ai_next) {
-      if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+      //sockfd contains the file descriptor to access the Socket
+      if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) 
+      { //Create Socket for the Result
           cerr << "ERROR: Failed to Create Socket" << endl;
-          continue;
+          continue; //On to the Next Result
       }
+
+      // -------------------------------------------------------------------- //
+      // Connect to the Server
+      // -------------------------------------------------------------------- //
       int flags = fcntl(sockfd, F_GETFL); //Get Flags from the Socket
       flags |= O_NONBLOCK; //Add the Non Blocking Flag to the Socket Flags Set
       fcntl(sockfd, F_SETFL, flags); //Set The Socket to NONBLOCKING
@@ -125,16 +132,16 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     flags &= ~O_NONBLOCK;
     fcntl(sockfd, F_SETFL, flags);
 
-    break; // If we get here, we must have connected successfully
+    break; // Must have connected successfully
   }
 
   if (p == NULL) {
-    // Looped off the end of the list with no connection
+    // End of List with No Successful Bind
     cerr << "ERROR: Failed to Bind Socket" << endl;
     exit(3);
   }
 
-  freeaddrinfo(servinfo); // All done with this structure
+  freeaddrinfo(servinfo); // Deallocate Structure
   //sockfd contains the file descriptor to access the Socket
   // int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -155,7 +162,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // socklen_t slen; //Socket Length
   // int errorCheck; //Error Code
 
-  // int res = connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
+//int res = connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
   // if (res < 0) { //Possible Error
   //   if(errno == EINPROGRESS) {
   //     fd_set active_fd_set;
@@ -166,11 +173,11 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
 
   //     working_fd_set = active_fd_set; //Determine the Working Set
 
-  //     struct timeval tv = {15, 0};   //Set the Timeout Interval as 15 Seconds!
+  //     struct timeval tv = {15, 0};  //Set the Timeout Interval as 15 Seconds!
   //     if (select(sockfd + 1, NULL, &working_fd_set, NULL, &tv) > 0) 
   //     { 
   //       slen = sizeof(int); 
-  //       getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&errorCheck), &slen); 
+//       getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&errorCheck), &slen); 
   //       if (errorCheck) { 
   //         cerr << "ERROR: Connection Error" << endl;
   //         exit(3);

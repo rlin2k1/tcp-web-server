@@ -175,49 +175,57 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // ------------------------------------------------------------------------ //
   // Create a Socket using TCP IP
   // ------------------------------------------------------------------------ //
-  int sockfd;  
-  struct addrinfo hints, *servinfo, *p;
-  int rv;
+  int sockfd; //Socket File Descriptor
+  struct addrinfo hints, *servinfo, *p; //For getaddrinfo()
+  int rv; //Check Return Value of getaddrinfo()
 
-  memset(&hints, 0, sizeof hints);
-  hints.ai_family = AF_INET; // Use AF_INET6 to force IPv6
+  memset(&hints, 0, sizeof hints); //Initialize Hints
+  hints.ai_family = AF_INET; // AF_INET for IPv4
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE; // Use my IP address
 
-  if ((rv = getaddrinfo(NULL, argv[1], &hints, &servinfo)) != 0) {
+  if ((rv = getaddrinfo(NULL, argv[1], &hints, &servinfo)) != 0) { //GetAddrInfo
     cerr << "ERROR: Get Address Info Failed" << endl;
     exit(3);
   }
 
-  // Loop through all the results and bind to the first we can
+  // Loop through all results and try to bind
   for(p = servinfo; p != NULL; p = p->ai_next) {
-      if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+      //sockfd contains the file descriptor to access the Socket
+      if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) 
+      { //Create Socket for the Result
           cerr << "ERROR: Failed to Create Socket" << endl;
-          continue;
+          continue; //On to the Next Result
       }
-
+      // -------------------------------------------------------------------- //
+      // Allow Others to Reuse the Address - Error Handling
+      // -------------------------------------------------------------------- //
       int yes = 1;
-      if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+      if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) 
+      {
         cerr << "ERROR: Set Socket Options Failed" << endl;
       }
       fcntl(sockfd, F_SETFL, O_NONBLOCK);
-
+      // -------------------------------------------------------------------- //
+      // Bind Address to Socket
+      // -------------------------------------------------------------------- //
       if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-          cerr << "ERROR: Error Binding the Port and the HostName/IP Address Together" << endl;
+          cerr << "ERROR: Error Binding the Port and the HostName/IP Address" <<
+          "Together" << endl;
           close(sockfd); //Finally Close the Connection
           continue;
       }
 
-      break; // If we get here, we must have connected successfully
+      break; // Must have connected successfully
   }
 
   if (p == NULL) {
-      // Looped off the end of the list with no successful bind
+      // End of List with No Successful Bind
       cerr << "ERROR: Failed to Bind Socket" << endl;
       exit(3);
   }
 
-  freeaddrinfo(servinfo); // all done with this structure
+  freeaddrinfo(servinfo); // Deallocate Structure
   //sockfd contains the file descriptor to access the Socket
   //int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -225,7 +233,8 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // Allow Others to Reuse the Address - Error Handling
   // ------------------------------------------------------------------------ //
   // int yes = 1;
-  // if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
+  // if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) 
+  // {
   //   cerr << "ERROR: Set Socket Options Failed" << endl;
   //   close(sockfd); //Finally Close the Connection
   //   exit(3);
@@ -243,15 +252,18 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // struct sockaddr_in addr;
 
   // addr.sin_family = AF_INET; //Type
-  // addr.sin_port = htons(port_number); //DefinePortNumber - ShortNetworkByteOrder
+  // addr.sin_port = htons(port_number); 
+  //DefinePortNumber - ShortNetworkByteOrder
 
-  // addr.sin_addr.s_addr = *(in_addr_t *) hostinfo->h_addr; //Where Hosting From
-  // memset(addr.sin_zero, '\0', sizeof(addr.sin_zero)); //Memset to Null Bytes
+  // addr.sin_addr.s_addr = *(in_addr_t *) hostinfo->h_addr; 
+  //Where Hosting From
+  // memset(addr.sin_zero, '\0', sizeof(addr.sin_zero)); 
+  //Memset to Null Bytes
 
   // if (bind(sockfd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
   //   //Bind the Port and Hostname/IP Address Together
-  //   cerr << "ERROR: Error Binding the Port and the HostName/IP Address Together"
-  //     << endl;
+  //   cerr << "ERROR: Error Binding the Port and the HostName/IP Address" << 
+  //   "Together" << endl;
   //   close(sockfd); //Finally Close the Connection
   //   exit(3);
   // }
@@ -333,5 +345,6 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       }
   }
   close(sockfd);
+
   return 0;
 }
