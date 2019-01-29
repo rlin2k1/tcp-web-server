@@ -55,6 +55,11 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     exit(3);
   }
   string file_name = argv[3]; //Assume File Name is Always Correct - 3rd Arg
+  FILE *fs = fopen(file_name.c_str(), "r"); //Open the File for Reading
+  if(fs == nullptr){
+    cerr << "ERROR: File Does NOT Exist!" << endl;
+    exit(3);
+  }
 
   cerr << "Hostname to Be Connected to: " << hostname << endl;
   cerr << "Port Number to Be Connected to: " << port_number << endl;
@@ -218,7 +223,6 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // ------------------------------------------------------------------------ //
   // Send/Receive Data to/from Connection
   // ------------------------------------------------------------------------ //
-  FILE *fs = fopen(file_name.c_str(), "r"); //Open the File for Reading
   char buf[BUFLENGTH] = {0}; //Set the Buffer as BUFLENGTH Characters
 
   memset(buf, '\0', sizeof(buf)); //Reset Buffer Every Time
