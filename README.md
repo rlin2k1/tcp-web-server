@@ -35,6 +35,7 @@ I had quite a bit of included libraries:<br>
 #include <sys/wait.h><br>
 #include \<fstream\><br>
 #include <sys/select.h> //For the Select()<br>
+#include <netdb.h> //For getaddrinfo()
 
 ## Online Tutorials or Code Examples
 Code Examples:
@@ -54,6 +55,10 @@ Online Tutorials:
 - https://stackoverflow.com/questions/5269683/rewindfile-pointer-and-then-fwrite-wont-fwrite-overwrite-the-file-contents
 - http://www.cplusplus.com/reference/cstdio/fopen/
 - http://developerweb.net/viewtopic.php?id=3196
+- https://en.wikibooks.org/wiki/C_Programming/POSIX_Reference/netdb.h/getaddrinfo#Example
+- https://stackoverflow.com/questions/16372700/how-to-use-getaddrinfo-to-connect-to-a-server-using-the-external-ip
+- https://docs.microsoft.com/en-us/windows/desktop/api/ws2tcpip/nf-ws2tcpip-getaddrinfo
+- https://www.dreamincode.net/forums/topic/109330-how-to-use-getaddrinfo/
 
 ## Makefile
 
