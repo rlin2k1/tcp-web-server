@@ -231,7 +231,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   while((fs_block_sz = fread(buf, sizeof(char), BUFLENGTH, fs)) > 0)
   {
     cerr << "Send: " << buf << endl; //Output the Buffer into Standard Output;
-    if (send(sockfd, buf, fs_block_sz, 0) == -1) {
+    if (send(sockfd, buf, fs_block_sz, MSG_NOSIGNAL) == -1) {
       //Attempt to Send the BUFFER String Over the Socket Connection
       cerr << "ERROR: Send Function Failed" << endl;
       close(sockfd); //Finally Close the Connection
@@ -239,6 +239,5 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     }
   }
   close(sockfd); //Finally Close the Connection
-
   return 0; //Exit Normally
 }
