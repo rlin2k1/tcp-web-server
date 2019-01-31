@@ -96,7 +96,7 @@ void *socketThread(void *arg)
     int fr_block_sz = 0; //We Got Something!
     while((fr_block_sz = recv(newSocket, buf, BUFLENGTH, 0)) > 0)
     {
-        cerr << buf << endl; //Output the Buffer into Standard Output
+        //cerr << buf << endl; //Output the Buffer into Standard Output
         int write_sz = fwrite(buf, sizeof(char), fr_block_sz, fs); //Write File
         fflush(fs); //Make Sure Everything is Written to File!
         if(write_sz < fr_block_sz)
@@ -169,8 +169,8 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   file_directory = argv[2]; //Assume Directory is Always Correct-2nd Arg
   mkdir(file_directory.c_str(), 0777); //Will Always Have Permissions
 
-  cerr << "Port Number to Be Connected to: " << port_number << endl;
-  cerr << "Directory to Save Transferred File in: " << file_directory << endl;
+  //cerr << "Port Number to Be Connected to: " << port_number << endl;
+  //cerr << "Directory to Save Transferred File in: " << file_directory << endl;
   
   // ------------------------------------------------------------------------ //
   // Create a Socket using TCP IP
@@ -321,7 +321,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr,
        sizeof(ipstr));
       //Put Client Information in 'ipstr'
-      cerr << "Accept a Connection From: " << ipstr << ":" << \
+      //cerr << "Accept a Connection From: " << ipstr << ":" << \
       ntohs(clientAddr.sin_port) << endl; //State Who Was Accepted
 
       struct arg_struct arguments;

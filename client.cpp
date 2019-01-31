@@ -61,9 +61,9 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     exit(3);
   }
 
-  cerr << "Hostname to Be Connected to: " << hostname << endl;
-  cerr << "Port Number to Be Connected to: " << port_number << endl;
-  cerr << "File Name to Transfer: " << file_name << endl;
+  //cerr << "Hostname to Be Connected to: " << hostname << endl;
+  //cerr << "Port Number to Be Connected to: " << port_number << endl;
+  //cerr << "File Name to Transfer: " << file_name << endl;
 
   // ------------------------------------------------------------------------ //
   // Create a Socket using TCP IP
@@ -230,7 +230,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   int fs_block_sz;
   while((fs_block_sz = fread(buf, sizeof(char), BUFLENGTH, fs)) > 0)
   {
-    cerr << "Send: " << buf << endl; //Output the Buffer into Standard Output;
+    //cerr << "Send: " << buf << endl; //Output the Buffer into Standard Output;
     if (send(sockfd, buf, fs_block_sz, MSG_NOSIGNAL) == -1) {
       //Attempt to Send the BUFFER String Over the Socket Connection
       cerr << "ERROR: Send Function Failed" << endl;
