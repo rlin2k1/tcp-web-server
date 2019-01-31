@@ -271,7 +271,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   // ------------------------------------------------------------------------ //
   // Set Socket to Listen Status
   // ------------------------------------------------------------------------ //
-  if (listen(sockfd, 100) == -1) {
+  if (listen(sockfd, 15) == -1) {
     //Start Listening to the Connections
     cerr << "ERROR: Listen() Failed" << endl;
     close(sockfd); //Finally Close the Connection
@@ -288,7 +288,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
 
   //----------------------------------------------------------------------------
   int newSocket;
-  pthread_t tid[100];
+  pthread_t tid[15];
   int i = 1;
   while(1)
   {
