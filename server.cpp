@@ -81,6 +81,7 @@ void *socketThread(void *arg)
         cerr << "ERROR: SELECT() FAILED" << endl;
         close(newSocket); //Finally Close the Connection
         pthread_exit(NULL);
+        fclose(fs);
         exit(3);
     }
     if (rc == 0)
@@ -90,6 +91,7 @@ void *socketThread(void *arg)
         fflush(fd); //Make Sure Everything is Written to File!
         cerr << "ERROR: Select Timed Out!" << endl;
         close(newSocket); //Finally Close the Connection
+        fclose(fd);
         pthread_exit(NULL);
         exit(3);
     }
@@ -119,6 +121,7 @@ void *socketThread(void *arg)
         {
           cerr << "ERROR: RECV() FAILED" << endl;
           close(newSocket); //Finally Close the Connection
+          fclose(fs);
           pthread_exit(NULL);
           exit(3);
         }
@@ -126,6 +129,7 @@ void *socketThread(void *arg)
     
   }
   close(newSocket); //Finally Close the Connection
+  fclose(fs);
   pthread_exit(NULL);
 }
 
@@ -345,6 +349,5 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       }
   }
   close(sockfd);
-
   return 0;
 }

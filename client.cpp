@@ -79,6 +79,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   if ((rv = getaddrinfo(hostname, argv[2], &hints, &servinfo)) != 0)//GetAddrInfo
   {
     cerr << "ERROR: Get Address Info Failed" << endl;
+    fclose(fs);
     exit(3);
   }
 
@@ -118,17 +119,20 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
           getsockopt(sockfd, SOL_SOCKET, SO_ERROR, (void*)(&errorCheck), &slen); 
           if (errorCheck) { 
             cerr << "ERROR: Connection Error" << endl;
+            fclose(fs);
             exit(3);
           } 
         } 
         else 
         { 
           cerr << "ERROR: Connection Timed Out Error" << endl;
+          fclose(fs);
           exit(3);
         }
       } 
       else { 
         cerr << "ERROR: Connection Error" << endl;
+        fclose(fs);
         exit(3); 
       } 
     } 
@@ -143,6 +147,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   if (p == NULL) {
     // End of List with No Successful Bind
     cerr << "ERROR: Failed to Bind Socket" << endl;
+    fclose(fs);
     exit(3);
   }
 
@@ -211,6 +216,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
     //Make Sure Client Address is OK
     cerr << "ERROR: Getsockname Function Failed" << endl;
     close(sockfd); //Finally Close the Connection
+    fclose(fs);
     exit(3);
   }
 
@@ -235,9 +241,11 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       //Attempt to Send the BUFFER String Over the Socket Connection
       cerr << "ERROR: Send Function Failed" << endl;
       close(sockfd); //Finally Close the Connection
+      fclose(fs);
       exit(3);
     }
   }
   close(sockfd); //Finally Close the Connection
+  fclose(fs);
   return 0; //Exit Normally
 }
