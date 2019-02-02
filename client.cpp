@@ -243,7 +243,6 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       fclose(fs);
       exit(3);
     }
-    sleep(20);
   }
   close(sockfd); //Finally Close the Connection
   fclose(fs);

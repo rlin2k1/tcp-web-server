@@ -64,7 +64,7 @@ void *socketThread(void *arg)
 
   string file_path = file_directory + "/" + to_string(num) + ".file"; //FileName
   FILE *fs = fopen(file_path.c_str(), "wb"); //Open the File for Modification
-  cout << "ERE" << endl;
+  
   char error[6] = "ERROR";
   char buf[BUFLENGTH] = {0}; //Set the Buffer as BUFLENGTH Characters
 
@@ -81,7 +81,6 @@ void *socketThread(void *arg)
         cerr << "ERROR: SELECT() FAILED" << endl;
         close(newSocket); //Finally Close the Connection
         pthread_exit(NULL);
-        fclose(fs);
         exit(3);
     }
     if (rc == 0)
@@ -91,7 +90,6 @@ void *socketThread(void *arg)
         fflush(fd); //Make Sure Everything is Written to File!
         cerr << "ERROR: Select Timed Out!" << endl;
         close(newSocket); //Finally Close the Connection
-        fclose(fd);
         pthread_exit(NULL);
         exit(3);
     }
@@ -124,7 +122,6 @@ void *socketThread(void *arg)
         {
           cerr << "ERROR: RECV() FAILED" << endl;
           close(newSocket); //Finally Close the Connection
-          fclose(fs);
           pthread_exit(NULL);
           exit(3);
         }
@@ -132,7 +129,6 @@ void *socketThread(void *arg)
     
   }
   close(newSocket); //Finally Close the Connection
-  fclose(fs);
   pthread_exit(NULL);
 }
 
@@ -352,5 +348,6 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       }
   }
   close(sockfd);
+
   return 0;
 }
