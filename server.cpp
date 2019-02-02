@@ -64,7 +64,7 @@ void *socketThread(void *arg)
 
   string file_path = file_directory + "/" + to_string(num) + ".file"; //FileName
   FILE *fs = fopen(file_path.c_str(), "wb"); //Open the File for Modification
-
+  cout << "ERE" << endl;
   char error[6] = "ERROR";
   char buf[BUFLENGTH] = {0}; //Set the Buffer as BUFLENGTH Characters
 
@@ -108,6 +108,9 @@ void *socketThread(void *arg)
         {
           break; //Done Reading!
         }
+    }
+    if(fr_block_sz == 0) {
+      break;
     }
     if(fr_block_sz < 0)
     {
@@ -321,8 +324,8 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr,
        sizeof(ipstr));
       //Put Client Information in 'ipstr'
-      //cerr << "Accept a Connection From: " << ipstr << ":" << \
-      ntohs(clientAddr.sin_port) << endl; //State Who Was Accepted
+      //cerr << "Accept a Connection From: " << ipstr << ":" <<
+      //ntohs(clientAddr.sin_port) << endl; //State Who Was Accepted
 
       struct arg_struct arguments;
       arguments.socket = newSocket;
@@ -334,10 +337,10 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
         close(sockfd); //Finally Close the Connection
       }
       i = i + 1;
-      if( i >= 100)
+      if( i >= 15)
       {
         i = 0;
-        while(i < 100)
+        while(i < 15)
         {
           pthread_join(tid[i++],NULL);
         }

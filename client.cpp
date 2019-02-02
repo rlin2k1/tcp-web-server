@@ -217,8 +217,8 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
   char ipstr[INET_ADDRSTRLEN] = {'\0'}; //Set String to NullByte
   inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
   //Put Client Information in 'ipstr'
-  cerr << "Set Up a Connection From: " << ipstr << ":" << \
-  ntohs(clientAddr.sin_port) << endl; //State Who the Client Is
+  //cerr << "Set Up a Connection From: " << ipstr << ":" <<
+  //ntohs(clientAddr.sin_port) << endl; //State Who the Client Is
 
   // ------------------------------------------------------------------------ //
   // Send/Receive Data to/from Connection
@@ -237,6 +237,7 @@ int main(int argc, char *argv[]) //Main Function w/ Arguments from Command Line
       close(sockfd); //Finally Close the Connection
       exit(3);
     }
+    sleep(20);
   }
   close(sockfd); //Finally Close the Connection
   return 0; //Exit Normally
